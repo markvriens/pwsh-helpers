@@ -8,14 +8,14 @@ namespace BuildJsonValidator.Commands;
     public class GetJsonSchemaValidationCommand : Cmdlet
     {
         [Parameter(Mandatory = true)]
-        public string Json { get; set; }
+        public string JsonPath { get; set; }
 
         [Parameter(Mandatory = true)]
-        public string Schema { get; set; }
+        public string SchemaSource { get; set; }
 
         protected override void ProcessRecord()
         {
-            var result = JsonValidatorHelper.ValidateFromArgsAsync(new[] { Json, Schema })
+            var result = JsonValidatorHelper.ValidateFromArgsAsync(new[] { JsonPath, SchemaSource })
                 .GetAwaiter()
                 .GetResult();
 

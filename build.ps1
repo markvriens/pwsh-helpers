@@ -5,12 +5,17 @@ $outDir = Join-Path $PSScriptRoot "release/$moduleName"
 $binReleaseDir = Join-Path $PSScriptRoot "src/modules/$moduleName/bin/Release/net8.0"
 $binDll = Join-Path $outDir "$moduleName.dll"
 
-New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+if (-Not (Test-Path $outDir)) {
+    New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+}
+else {
+  Remove-Item -Recurse -Force -Path $outDir
+}
 
 $srcDir = Join-Path $PSScriptRoot "src/modules/$moduleName"
 $srcProject = Join-Path $srcDir "$moduleName.csproj"
 dotnet build $srcProject -c Release
-
+$srcDir
 Copy-Item `
   (Join-Path $srcDir "$moduleName.psd1") `
   (Join-Path $outDir "$moduleName.psd1") `
@@ -32,7 +37,7 @@ Copy-Item `
   -Force
 
 Import-Module $outDir/$moduleName.psd1 -Force
-Get-JsonSchemaValidation -Json '{"name": "Mark"}' -Schema '{"type": "object", "properties": {"name": {"type": "string"}}}'
+Get-JsonSchemaValidation -JsonPath '.\tests\mock\test.json' -SchemaSource '.\tests\mock\test.schema.json'
 
-Get-Module Build-JsonValidator | Remove-Module -Force
+Get-Module Build-JsonValidator -All | Remove-Module -Force -ErrorAction SilentlyContinue
 
