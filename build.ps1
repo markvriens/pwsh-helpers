@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $moduleName = 'Build-JsonValidator'
 # Set up output directories and paths for the build artifacts
 $outDir = Join-Path $PSScriptRoot "release/$moduleName"
-$binReleaseDir = Join-Path $PSScriptRoot "src/modules/$moduleName/bin/Release/net8.0"
+$binReleaseDir = Join-Path $PSScriptRoot "src/modules/$moduleName/bin/Release/net10.0"
 $binDll = Join-Path $outDir "$moduleName.dll"
 
 if (-Not (Test-Path $outDir)) {
