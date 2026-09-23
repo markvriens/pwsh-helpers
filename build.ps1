@@ -10,6 +10,7 @@ if (-Not (Test-Path $outDir)) {
 }
 else {
   Remove-Item -Recurse -Force -Path $outDir
+  New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 }
 
 $srcDir = Join-Path $PSScriptRoot "src/Modules/$moduleName"
@@ -29,30 +30,15 @@ if (-not (Test-Path $changelogPath)) {
 
 dotnet build $srcProject -c Release
 $srcDir
-Copy-Item `
-  (Join-Path $srcDir "$moduleName.psd1") `
-  (Join-Path $outDir "$moduleName.psd1") `
-  -Force
+Copy-Item -Path (Join-Path $srcDir "$moduleName.psd1") -Destination (Join-Path $outDir "$moduleName.psd1") -Force
 
-Copy-Item `
-  (Join-Path $srcDir 'CHANGELOG.md') `
-  (Join-Path $outDir 'CHANGELOG.md') `
-  -Force
+Copy-Item -Path (Join-Path $srcDir 'CHANGELOG.md') -Destination (Join-Path $outDir 'CHANGELOG.md') -Force
 
-Copy-Item `
-  (Join-Path $binReleaseDir "$moduleName.dll") `
-  $binDll `
-  -Force
+Copy-Item -Path (Join-Path $binReleaseDir "$moduleName.dll") -Destination $binDll -Force
 # Copy dependencies from the build output to the release directory
-Copy-Item `
-  (Join-Path $binReleaseDir 'Newtonsoft.Json.dll') `
-  (Join-Path $outDir 'Newtonsoft.Json.dll') `
-  -Force
+Copy-Item -Path (Join-Path $binReleaseDir 'Newtonsoft.Json.dll') -Destination (Join-Path $outDir 'Newtonsoft.Json.dll') -Force
 
-Copy-Item `
-  (Join-Path $binReleaseDir 'Newtonsoft.Json.Schema.dll') `
-  (Join-Path $outDir 'Newtonsoft.Json.Schema.dll') `
-  -Force
+Copy-Item -Path (Join-Path $binReleaseDir 'Newtonsoft.Json.Schema.dll') -Destination (Join-Path $outDir 'Newtonsoft.Json.Schema.dll') -Force
 
 Import-Module $outDir/$moduleName.psd1 -Force
 Get-JsonSchemaValidation -JsonPath '.\tests\mock\test.json' -SchemaSource '.\tests\mock\test.schema.json'
