@@ -1,5 +1,13 @@
 {
   "version": "2.0.0",
+  "windows":{
+    "options": {
+      "shell": {
+        "executable": "c:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+      }
+    }
+  },
   "tasks": [
     {
       "label": "Build: Json Validator (PowerShell 7)",

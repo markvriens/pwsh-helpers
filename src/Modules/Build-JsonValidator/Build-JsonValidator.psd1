@@ -22,6 +22,9 @@
         PSData = @{
             Tags = @('PowerShell', 'CSharp', 'BinaryModule')
             ProjectUri = 'https://github.com/markvriens/pwsh-helpers'
+            ReleaseNotes = @'
+See CHANGELOG.md for the module release history.
+'@
         }
     }
 }

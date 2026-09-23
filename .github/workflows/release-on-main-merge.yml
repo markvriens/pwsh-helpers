@@ -66,17 +66,57 @@ jobs:
           import pathlib
           import re
 
-          path = pathlib.Path('src/Build-JsonValidator/Build-JsonValidator.csproj')
-          text = path.read_text()
+          csproj_path = pathlib.Path('src/Modules/Build-JsonValidator/Build-JsonValidator.csproj')
+          psd1_path = pathlib.Path('src/Modules/Build-JsonValidator/Build-JsonValidator.psd1')
+
           new_version = '${{ steps.version.outputs.version }}'
           sha = '${{ github.sha }}'
 
-          text = re.sub(r'<Version>.*?</Version>', f'<Version>{new_version}</Version>', text, count=1, flags=re.S)
-          text = re.sub(r'<AssemblyVersion>.*?</AssemblyVersion>', f'<AssemblyVersion>{new_version}.0</AssemblyVersion>', text, count=1, flags=re.S)
-          text = re.sub(r'<FileVersion>.*?</FileVersion>', f'<FileVersion>{new_version}.0</FileVersion>', text, count=1, flags=re.S)
-          text = re.sub(r'<InformationalVersion>.*?</InformationalVersion>', f'<InformationalVersion>{new_version}+{sha}</InformationalVersion>', text, count=1, flags=re.S)
+          csproj_text = csproj_path.read_text(encoding='utf-8')
+          csproj_text = re.sub(r'<Version>.*?</Version>', f'<Version>{new_version}</Version>', csproj_text, count=1, flags=re.S)
+          csproj_text = re.sub(r'<FileVersion>.*?</FileVersion>', f'<FileVersion>{new_version}</FileVersion>', csproj_text, count=1, flags=re.S)
+          csproj_text = re.sub(r'<InformationalVersion>.*?</InformationalVersion>', f'<InformationalVersion>{new_version}+{sha}</InformationalVersion>', csproj_text, count=1, flags=re.S)
+          csproj_text = re.sub(r'<PackageVersion>.*?</PackageVersion>', f'<PackageVersion>{new_version}</PackageVersion>', csproj_text, count=1, flags=re.S)
+          csproj_path.write_text(csproj_text, encoding='utf-8')
 
-          path.write_text(text)
+          psd1_text = psd1_path.read_text(encoding='utf-8')
+          psd1_text = re.sub(r"(?m)^(\s*ModuleVersion\s*=\s*)'[^']*'", rf"\1'{new_version}'", psd1_text, count=1)
+          psd1_path.write_text(psd1_text, encoding='utf-8')
+          PY
+
+      - name: Update Changelog
+        id: changelog
+        uses: natescherer/changelog-management-action@v1
+        with:
+          mode: release
+          releaseVersion: ${{ steps.version.outputs.version }}
+          path: src/Modules/Build-JsonValidator/CHANGELOG.md
+
+      - name: Prepare release note artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          import re
+
+          version = '${{ steps.version.outputs.version }}'
+          changelog_path = pathlib.Path('src/Modules/Build-JsonValidator/CHANGELOG.md')
+          changelog_text = changelog_path.read_text(encoding='utf-8')
+
+          section_pattern = rf'(?ms)^## \[{re.escape(version)}\].*?(?=^## \[|\Z)'
+          section_match = re.search(section_pattern, changelog_text)
+          section_text = section_match.group(0).strip() if section_match else changelog_text.strip()
+
+          release_notes = (
+            f"# Build-JsonValidator {version}\n\n"
+            "This release was generated from the changelog.\n\n"
+            f"{section_text}\n"
+          )
+          pathlib.Path('release-notes.md').write_text(release_notes, encoding='utf-8')
+
+          changelog_asset = pathlib.Path(f'Build-JsonValidator-{version}-CHANGELOG.md')
+          changelog_asset.write_text(changelog_text, encoding='utf-8')
           PY
 
       - name: Commit version bump
@@ -85,49 +125,30 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/jsonValidator/jsonValidator.csproj
+          git add src/Modules/Build-JsonValidator/Build-JsonValidator.csproj
+          git add src/Modules/Build-JsonValidator/Build-JsonValidator.psd1
+          git add src/Modules/Build-JsonValidator/CHANGELOG.md
 
           if git diff --cached --quiet; then
             echo "No version change required."
             exit 0
           fi
 
-          git commit -m "Bump JsonValidator version to ${{ steps.version.outputs.version }}"
+          git commit -m "Bump Build-JsonValidator version to ${{ steps.version.outputs.version }}"
           git push origin HEAD:main
 
-      - name: Publish win-x64
+      - name: Build module package
         shell: bash
         run: |
           set -euo pipefail
-          dotnet publish src/jsonValidator/jsonValidator.csproj \
-            -c Release \
-            -r win-x64 \
-            --self-contained true \
-            -o publish/win-x64
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ./build.ps1
 
-      - name: Publish linux-x64
+      - name: Zip module output
         shell: bash
         run: |
           set -euo pipefail
-          dotnet publish src/jsonValidator/jsonValidator.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained true \
-            -o publish/linux-x64
-
-      - name: Zip win-x64 output
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd publish/win-x64
-          zip -r ../../jsonValidator-${{ steps.version.outputs.version }}-win-x64.zip .
-
-      - name: Zip linux-x64 output
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd publish/linux-x64
-          zip -r ../../jsonValidator-${{ steps.version.outputs.version }}-linux-x64.zip .
+          cd release
+          zip -r ../Build-JsonValidator-${{ steps.version.outputs.version }}.zip Build-JsonValidator
 
       - name: Create and push git tag
         shell: bash
@@ -141,7 +162,8 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
+          body_path: release-notes.md
           files: |
-            jsonValidator-${{ steps.version.outputs.version }}-win-x64.zip
-            jsonValidator-${{ steps.version.outputs.version }}-linux-x64.zip
+            Build-JsonValidator-${{ steps.version.outputs.version }}.zip
+            Build-JsonValidator-${{ steps.version.outputs.version }}-CHANGELOG.md
+            release-notes.md

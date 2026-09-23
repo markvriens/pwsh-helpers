@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $moduleName = 'Build-JsonValidator'
 # Set up output directories and paths for the build artifacts
 $outDir = Join-Path $PSScriptRoot "release/$moduleName"
-$binReleaseDir = Join-Path $PSScriptRoot "src/modules/$moduleName/bin/Release/net10.0"
+$binReleaseDir = Join-Path $PSScriptRoot "src/Modules/$moduleName/bin/Release/net10.0"
 $binDll = Join-Path $outDir "$moduleName.dll"
 
 if (-Not (Test-Path $outDir)) {
@@ -12,13 +12,31 @@ else {
   Remove-Item -Recurse -Force -Path $outDir
 }
 
-$srcDir = Join-Path $PSScriptRoot "src/modules/$moduleName"
+$srcDir = Join-Path $PSScriptRoot "src/Modules/$moduleName"
 $srcProject = Join-Path $srcDir "$moduleName.csproj"
+$changelogPath = Join-Path $srcDir 'CHANGELOG.md'
+
+if (-not (Get-Module -ListAvailable -Name ChangelogManagement)) {
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+    Install-Module ChangelogManagement -Scope CurrentUser -Force -AllowClobber
+}
+
+Import-Module ChangelogManagement -Force
+
+if (-not (Test-Path $changelogPath)) {
+    New-Changelog -Path $changelogPath -NoSemVer
+}
+
 dotnet build $srcProject -c Release
 $srcDir
 Copy-Item `
   (Join-Path $srcDir "$moduleName.psd1") `
   (Join-Path $outDir "$moduleName.psd1") `
+  -Force
+
+Copy-Item `
+  (Join-Path $srcDir 'CHANGELOG.md') `
+  (Join-Path $outDir 'CHANGELOG.md') `
   -Force
 
 Copy-Item `
