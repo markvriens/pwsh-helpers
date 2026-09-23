@@ -15,14 +15,10 @@ namespace BuildJsonValidator.Commands;
 
         protected override void ProcessRecord()
         {
-            var result = JsonValidatorHelper.ValidateFromArgsAsync(new[] { JsonPath, SchemaSource })
+            var result = JsonValidatorHelper.ValidateFromArgsAsync(([JsonPath, SchemaSource]))
                 .GetAwaiter()
                 .GetResult();
 
             WriteObject(result);
-            // var json = JObject.Parse(Json);
-            // var schema = JSchema.Parse(Schema);
-            // bool isValid = json.IsValid(schema, out IList<string> errorMessages);
-            // WriteObject(new { IsValid = isValid, Errors = errorMessages });
         }
     }
