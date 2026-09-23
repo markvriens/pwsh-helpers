@@ -8,10 +8,10 @@
     <AssemblyName>Build-JsonValidator</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Version>1.0.1</Version>
-    <FileVersion>1.0.1</FileVersion>
-    <InformationalVersion>1.0.1+a802e5e6b73ebd11e20db6b08d4e6771ae4ff903</InformationalVersion>
-    <PackageVersion>1.0.1</PackageVersion>
+    <Version>1.0.2</Version>
+    <FileVersion>1.0.2</FileVersion>
+    <InformationalVersion>1.0.2+9c1f47c2a3c72de5bb518834823976f5b0424780</InformationalVersion>
+    <PackageVersion>1.0.2</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

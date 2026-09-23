@@ -1,6 +1,6 @@
 @{
     RootModule = 'Build-JsonValidator.dll'
-    ModuleVersion = '1.0.1'
+    ModuleVersion = '1.0.2'
     GUID = '7d2d5d8a-3c5d-41f0-a0de-c8f7eabf9f12'
     Author = 'Mark'
     CompanyName = 'MV'
